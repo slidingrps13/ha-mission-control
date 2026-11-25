@@ -1,0 +1,99 @@
+import_from_todo:
+  fields:
+    dry_run:
+      default: true
+      selector:
+        boolean:
+    replace:
+      default: false
+      selector:
+        boolean:
+    branches:
+      selector:
+        text:
+          multiple: true
+    force_raw:
+      selector:
+        text:
+          multiple: true
+    from_file:
+      selector:
+        text:
+export:
+set_active:
+  fields:
+    active:
+      required: true
+      selector:
+        boolean:
+order_upsert:
+  fields:
+    store: {required: true, selector: {text: {}}}
+    order_number: {selector: {text: {}}}
+    tracking_number: {selector: {text: {}}}
+    stage: {selector: {text: {}}}
+    account: {selector: {text: {}}}
+    expected_date: {selector: {text: {}}}
+    expected_window: {selector: {text: {}}}
+    carrier: {selector: {text: {}}}
+    items: {selector: {text: {}}}
+    item_list: {selector: {text: {multiline: true}}}
+    total: {selector: {text: {}}}
+    order_url: {selector: {text: {}}}
+    message_id: {selector: {text: {}}}
+    received: {selector: {text: {}}}
+    subject: {selector: {text: {}}}
+    source: {selector: {text: {}}}
+order_update:
+  fields:
+    order: {required: true, selector: {text: {}}}
+    card_uid: {selector: {text: {}}}
+    carrier_seen: {selector: {text: {}}}
+    carrier_evidence: {selector: {text: {}}}
+    snapshot: {selector: {text: {}}}
+    collected_at: {selector: {text: {}}}
+    items: {selector: {text: {}}}
+orders_list:
+  fields:
+    recent_days: {selector: {number: {min: 0, max: 30}}}
+shopping_add:
+  fields:
+    name: {required: true, selector: {text: {}}}
+    qty: {selector: {text: {}}}
+    stores: {selector: {text: {multiple: true}}}
+    category: {selector: {text: {}}}
+    card_uid: {selector: {text: {}}}
+    note: {selector: {text: {}}}
+    handled: {selector: {text: {}}}
+    needed_by: {selector: {date: {}}}
+    added_by: {selector: {text: {}}}
+    source: {selector: {text: {}}}
+shopping_check:
+  fields:
+    item: {required: true, selector: {text: {}}}
+    store: {selector: {text: {}}}
+    price: {selector: {text: {}}}
+    source: {selector: {text: {}}}
+shopping_run:
+  fields:
+    store: {required: true, selector: {text: {}}}
+shopping_answer:
+  fields:
+    question: {required: true, selector: {text: {}}}
+    item: {selector: {text: {}}}
+shopping_overview:
+prune_door_snapshots:
+  fields:
+    days: {selector: {number: {min: 7, max: 365}}}
+file_note:
+  fields:
+    note: {required: true, selector: {text: {multiline: true}}}
+    source: {selector: {text: {}}}
+    pins: {selector: {object: {}}}
+    force: {selector: {boolean: {}}}
+    dry_run: {selector: {boolean: {}}}
+digest:
+  fields:
+    kind:
+      required: true
+      selector: {select: {options: [morning, evening]}}

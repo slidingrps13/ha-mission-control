@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+# never commit a board: the database, its journals and exports
+*.db
+*.db-wal
+*.db-shm
+mission_control_backups/
+*.export.json
+.ha-token
+*.pem

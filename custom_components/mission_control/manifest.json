@@ -1,0 +1,20 @@
+{
+  "domain": "mission_control",
+  "name": "Mission Control",
+  "codeowners": [],
+  "config_flow": true,
+  "dependencies": [
+    "frontend",
+    "http",
+    "panel_custom",
+    "todo",
+    "websocket_api"
+  ],
+  "documentation": "https://github.com/slidingrps13/ha-mission-control",
+  "integration_type": "service",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/slidingrps13/ha-mission-control/issues",
+  "requirements": [],
+  "single_config_entry": true,
+  "version": "1.0.0"
+}

@@ -1,0 +1,101 @@
+# Mission Control — the daily pushes, a nightly backup and two voice scripts.
+#
+# Optional. Copy this file to /config/packages/mission_control.yaml and make sure
+# configuration.yaml loads packages:
+#
+#   homeassistant:
+#     packages: !include_dir_named packages
+#
+# Then change the ONE line marked "EDIT" below (your phone's notify action) and
+# restart Home Assistant. Times are 08:00 and 17:00; change them in the triggers.
+
+automation:
+  - id: mission_control_morning_plan
+    alias: "Mission Control: morning plan"
+    description: "08:00 push: today's appointments, up to three things to do, tomorrow, and what came free."
+    mode: single
+    triggers:
+      - trigger: time
+        at: "08:00:00"
+    actions:
+      - action: mission_control.digest
+        data:
+          kind: morning
+        response_variable: plan
+      - action: &notify notify.mobile_app_your_phone # EDIT: your phone's notify action
+        data:
+          title: "{{ plan.title }}"
+          message: "{{ plan.message }}"
+          data:
+            url: /mission-control?page=digest # iOS
+            clickAction: /mission-control?page=digest # Android
+
+  - id: mission_control_evening_wrap
+    alias: "Mission Control: evening wrap"
+    description: "17:00 push: what was closed and moved today, then tomorrow."
+    mode: single
+    triggers:
+      - trigger: time
+        at: "17:00:00"
+    actions:
+      - action: mission_control.digest
+        data:
+          kind: evening
+        response_variable: wrap
+      - action: *notify
+        data:
+          title: "{{ wrap.title }}"
+          message: "{{ wrap.message }}"
+          data:
+            url: /mission-control?page=digest
+            clickAction: /mission-control?page=digest
+
+  - id: mission_control_nightly_export
+    alias: "Mission Control: nightly export"
+    description: "A JSON copy of the whole board in /config/mission_control_backups (the last 30 are kept)."
+    mode: single
+    triggers:
+      - trigger: time
+        at: "03:30:00"
+    actions:
+      - action: mission_control.export
+
+script:
+  mission_file_note:
+    alias: "Mission Control: file a note"
+    description: >-
+      Add a task, errand or reminder to Mission Control. Pass the note exactly as
+      said. It is filed as a card (by the AI Task entity, when one is set); a likely
+      duplicate is added as a note on the existing card instead.
+    mode: parallel
+    max: 10
+    fields:
+      note:
+        name: Note
+        description: The task, in plain words.
+        required: true
+        selector:
+          text:
+            multiline: true
+    sequence:
+      - action: mission_control.file_note
+        data:
+          note: "{{ note }}"
+          source: voice
+        response_variable: result
+      - stop: filed
+        response_variable: result
+
+  mission_today:
+    alias: "Mission Control: what's on today"
+    description: >-
+      What is on today: appointments, the things due or overdue, urgent items and
+      what is coming tomorrow. Returns title and message for the assistant to read out.
+    mode: parallel
+    sequence:
+      - action: mission_control.digest
+        data:
+          kind: morning
+        response_variable: plan
+      - stop: done
+        response_variable: plan

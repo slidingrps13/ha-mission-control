@@ -1,0 +1,32 @@
+# Example: feed orders into Mission Control from anything that can POST JSON
+# (a phone shortcut, an email-parsing service, another automation, a script).
+# Needs the "Package tracking" module switched on under Configure.
+#
+#   curl -X POST http://homeassistant.local:8123/api/webhook/mission-control-orders-CHANGE-ME \
+#        -H 'Content-Type: application/json' \
+#        -d '{"store": "Example Shop", "order_number": "A-1001", "stage": "shipped",
+#             "items": "Wiper blades", "expected_date": "2026-12-02"}'
+#
+# stage is one of: ordered, shipped, out_for_delivery, delivered, cancelled.
+# A card with "BLOCKED BY: order A-1001" clears itself when that order is delivered.
+
+automation:
+  - id: mission_control_order_feed
+    alias: "Mission Control: order feed (webhook)"
+    mode: queued
+    triggers:
+      - trigger: webhook
+        webhook_id: mission-control-orders-CHANGE-ME # pick your own hard-to-guess id
+        allowed_methods: [POST]
+        local_only: true
+    actions:
+      - action: mission_control.order_upsert
+        data:
+          store: "{{ trigger.json.store }}"
+          order_number: "{{ trigger.json.order_number | default(none) }}"
+          tracking_number: "{{ trigger.json.tracking_number | default(none) }}"
+          stage: "{{ trigger.json.stage | default('ordered') }}"
+          carrier: "{{ trigger.json.carrier | default(none) }}"
+          items: "{{ trigger.json.items | default(none) }}"
+          expected_date: "{{ trigger.json.expected_date | default(none) }}"
+          source: webhook

@@ -1,0 +1,140 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Mission Control",
+        "description": "A project board in the sidebar, backed by its own database (/config/mission_control.db). It starts with five branches — Home, Projects, Personal, Work and Automotive — which you can change later under Configure. Every field here is optional.",
+        "data": {
+          "person_name": "Your name",
+          "ai_task_entity": "AI Task entity for quick add",
+          "calendar_entity": "Calendar for due dates"
+        },
+        "data_description": {
+          "person_name": "Accepted as OWNER: <name> on a card and used in the pushes. Leave empty to be \"you\".",
+          "ai_task_entity": "Files quick notes for you: picks the branch, lane, effort and next step, and splits mixed notes. Without one, a note becomes a plain card.",
+          "calendar_entity": "Every open card with a due date gets an all-day event here. Events you make by hand are never touched."
+        }
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Mission Control is already set up."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Mission Control",
+        "menu_options": {
+          "settings": "Settings and optional modules",
+          "add_branch": "Add a branch",
+          "edit_branch": "Edit a branch",
+          "remove_branch": "Remove an empty branch"
+        }
+      },
+      "settings": {
+        "title": "Settings",
+        "data": {
+          "person_name": "Your name",
+          "ai_task_entity": "AI Task entity for quick add",
+          "calendar_entity": "Calendar for due dates",
+          "packages": "Package tracking (advanced)",
+          "shopping": "Shopping list (advanced)"
+        },
+        "data_description": {
+          "packages": "Adds sensor.packages_* and the order services. Nothing feeds it on its own: an automation calls mission_control.order_upsert (see the README). A card can then wait with BLOCKED BY: order <number>.",
+          "shopping": "Adds todo.mission_shopping, sensor.mission_shopping and the shopping services. It sits next to Home Assistant's own Shopping list."
+        }
+      },
+      "add_branch": {
+        "title": "Add a branch",
+        "description": "A branch is one tracker: one to-do list (todo.<key>_tracker) and one page in the panel. The key is made from the name and never changes.",
+        "data": {
+          "name": "Name",
+          "icon": "Icon",
+          "color": "Colour",
+          "work": "Work branch",
+          "assistant": "The assistant can usually do this work",
+          "keywords": "Quick-add keywords"
+        },
+        "data_description": {
+          "work": "Untagged cards here count as work, and weekday work hours bring them forward.",
+          "assistant": "Cards here default to the assistant's move instead of yours (desk work an AI can finish alone).",
+          "keywords": "Comma-separated words that make the quick-add box suggest this branch."
+        }
+      },
+      "edit_branch": {
+        "title": "Edit a branch",
+        "data": {
+          "branch": "Branch"
+        }
+      },
+      "edit_branch_details": {
+        "title": "Edit a branch",
+        "description": "Key: {key} (its to-do list is todo.{key}_tracker and does not change).",
+        "data": {
+          "name": "Name",
+          "icon": "Icon",
+          "color": "Colour",
+          "work": "Work branch",
+          "assistant": "The assistant can usually do this work",
+          "keywords": "Quick-add keywords"
+        }
+      },
+      "remove_branch": {
+        "title": "Remove a branch",
+        "description": "Only a branch with no cards (open or closed) can be removed. Move or delete its cards first.",
+        "data": {
+          "branch": "Branch"
+        }
+      }
+    },
+    "error": {
+      "name_required": "Give the branch a name.",
+      "name_taken": "Another branch already has that name.",
+      "branch_not_empty": "That branch still has cards.",
+      "last_branch": "Keep at least one branch."
+    }
+  },
+  "services": {
+    "file_note": {
+      "name": "File a note",
+      "description": "Turn a plain-language note into a card (or a few). With an AI Task entity set in the options, the model files it; otherwise it becomes one plain card.",
+      "fields": {
+        "note": {"name": "Note", "description": "The task, in plain words."},
+        "source": {"name": "Source", "description": "Where it came from: panel, voice, phone. Anything but panel adds a detected duplicate as a note on the existing card instead of asking."},
+        "pins": {"name": "Pinned fields", "description": "Overrides for the main card, e.g. {\"branch\": \"home\", \"due\": \"2026-12-01\"}."},
+        "force": {"name": "File even if it looks like a duplicate", "description": "Skip the duplicate check."},
+        "dry_run": {"name": "Dry run", "description": "Classify only; write nothing."}
+      }
+    },
+    "digest": {
+      "name": "Build a digest",
+      "description": "Build the morning plan or the evening wrap as {title, message}. Sends nothing; pass the result to a notify action.",
+      "fields": {
+        "kind": {"name": "Kind", "description": "morning or evening."}
+      }
+    },
+    "import_from_todo": {
+      "name": "Import from to-do lists",
+      "description": "Read existing to-do lists named todo.<branch>_tracker into the database (set_active false first so the names are free). Dry run by default; writes a report to /config/mission_control_backups.",
+      "fields": {
+        "dry_run": {"name": "Dry run", "description": "Plan and verify only; write nothing to the database."},
+        "replace": {"name": "Replace", "description": "Overwrite branches that already hold items."},
+        "branches": {"name": "Branches", "description": "Limit to these branch keys."},
+        "force_raw": {"name": "Force raw", "description": "Uid prefixes to store verbatim instead of normalizing."},
+        "from_file": {"name": "From file", "description": "Import a Mission Control export under /config/mission_control_backups instead of the live lists."}
+      }
+    },
+    "export": {
+      "name": "Export",
+      "description": "Write a JSON export of the whole database to /config/mission_control_backups (the last 30 are kept)."
+    },
+    "set_active": {
+      "name": "Set active",
+      "description": "Start or stop serving the todo.<branch>_tracker lists from the database.",
+      "fields": {
+        "active": {"name": "Active", "description": "True serves the lists; false removes them and frees their entity ids."}
+      }
+    }
+  }
+}
