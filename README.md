@@ -24,6 +24,8 @@ can be added by voice or by an AI that files a plain-language note for you.
 - **Repeating cards**, **tags** across branches, **field history with undo**.
 - **Two daily pushes** (optional): a morning plan and an evening wrap.
 - **Due dates on a calendar** (optional).
+- **A Claude connector** (optional): Claude Desktop or Claude Code can brief you, pick up a
+  card where the last session stopped, file new work and leave resume notes.
 
 | Branch page | Digest |
 |---|---|
@@ -93,6 +95,72 @@ Settings → Devices & services → Mission Control → **Configure**:
 Copy it to `/config/packages/`, add `packages: !include_dir_named packages` under
 `homeassistant:` in `configuration.yaml`, change the one line marked `EDIT` to your phone's
 notify action, and restart.
+
+## Use it with Claude (optional)
+
+The [`claude/`](claude/) folder lets Claude work the board with you: start a session with a
+brief, pick up a card where the last session stopped, add work, and leave a
+*Stopped / Next / Blocked* note on each card it touched.
+
+| File | What it is |
+|---|---|
+| [`mission_control_mcp.py`](claude/mission_control_mcp.py) | A small connector (MCP server) with three tools: `mc_brief`, `mc_ws` (Mission Control commands only) and `mc_file_note`. |
+| [`skills/mission-control/SKILL.md`](claude/skills/mission-control/SKILL.md) | The habits: how cards are written, the start/end-of-session routine, what needs your yes. |
+| [`PROJECT_INSTRUCTIONS.md`](claude/PROJECT_INSTRUCTIONS.md) | A block to paste into a Claude Project's instructions. |
+
+**1. A Home Assistant user for Claude.** Settings → People → *Add person*, turn on
+*Allow login*, name it Claude, leave *Administrator* off. Sign in as that user once (a private
+browser window), open its profile → *Security* → *Long-lived access tokens* → *Create token*,
+and save the token in a file only you can read (e.g. `~/.config/mission-control/token`).
+Mission Control works fine for a non-admin user, and a separate user keeps Claude's writes
+apart from yours.
+
+**2. [uv](https://docs.astral.sh/uv/).** It fetches the connector's Python packages the first
+time it runs. Then put the `claude` folder somewhere permanent (or clone this repository).
+
+**3. Add the connector.**
+
+*Claude Desktop* — Settings → Developer → *Edit Config*, add this to
+`claude_desktop_config.json`, then quit and reopen Claude:
+
+```json
+{
+  "mcpServers": {
+    "mission-control": {
+      "command": "uv",
+      "args": ["run", "/full/path/to/claude/mission_control_mcp.py"],
+      "env": {
+        "HA_URL": "http://homeassistant.local:8123",
+        "HA_TOKEN_FILE": "/full/path/to/token"
+      }
+    }
+  }
+}
+```
+
+On Windows write paths as `C:\\Users\\you\\mission-control\\claude\\mission_control_mcp.py`.
+If Claude can't start it, give the full path to `uv` (`which uv` / `where uv`).
+
+*Claude Code:*
+
+```bash
+claude mcp add mission-control -e HA_URL=http://homeassistant.local:8123 \
+  -e HA_TOKEN_FILE=$HOME/.config/mission-control/token -- uv run /full/path/to/claude/mission_control_mcp.py
+```
+
+**4. Add the skill.** Zip the `claude/skills/mission-control` folder and upload it as a skill
+in Claude's settings (for Claude Code, copy the folder to `~/.claude/skills/`). Optionally
+paste [`PROJECT_INSTRUCTIONS.md`](claude/PROJECT_INSTRUCTIONS.md) into a Project.
+
+**Try it:** ask *"what's on my board today?"* or *"add 'clean the gutters before December' to
+the board"*.
+
+What it can reach: only the Mission Control commands listed in the connector (read, update,
+notes, links, blocks, history, undo) and the `file_note` and `digest` services. There is no
+delete. Every write is recorded with source `claude` in the card's history, so you can undo it
+from the card panel. The computer running Claude has to reach Home Assistant (same network, a
+VPN, or your remote `https://` address). The token can still do whatever the Claude user may
+do in Home Assistant, so keep the file private.
 
 ## Optional modules: packages and shopping
 

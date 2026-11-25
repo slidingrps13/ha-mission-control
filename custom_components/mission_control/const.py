@@ -7,7 +7,7 @@ import re
 import voluptuous as vol
 
 DOMAIN = "mission_control"
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 
 # --------------------------------------------------------------------- branches
 # A branch is one tracker: one to-do list (todo.<key>_tracker) and one page in the

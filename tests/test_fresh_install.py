@@ -103,6 +103,28 @@ async def test_quick_add_without_ai_files_a_plain_card(hass: HomeAssistant) -> N
     await hass.async_block_till_done()
     assert hass.states.get("todo.automotive_tracker").state == "1"
 
+    # Same title again without a model: an AI chat (source claude) is shown the match ...
+    again = await hass.services.async_call(
+        DOMAIN, "file_note", {"note": "rotate the tires!", "source": "claude"},
+        blocking=True, return_response=True,
+    )
+    assert again["status"] == "duplicate" and again["duplicate_uid"] == res["uid"]
+    # ... it can still insist ...
+    forced = await hass.services.async_call(
+        DOMAIN, "file_note", {"note": "Rotate the tires", "source": "claude", "force": True,
+                              "pins": {"branch": "automotive"}},
+        blocking=True, return_response=True,
+    )
+    assert forced["status"] == "filed"
+    # ... and voice, with no screen to ask on, keeps the words on the existing card.
+    voice = await hass.services.async_call(
+        DOMAIN, "file_note", {"note": "Rotate the tires", "source": "voice"},
+        blocking=True, return_response=True,
+    )
+    assert voice["status"] == "noted_on_duplicate"
+    await hass.async_block_till_done()
+    assert hass.states.get("todo.automotive_tracker").state == "2"
+
 
 async def test_quick_add_with_ai_task_and_duplicate(hass: HomeAssistant) -> None:
     await _setup(hass, ai_task_entity="ai_task.fake")

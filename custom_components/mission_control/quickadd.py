@@ -201,6 +201,10 @@ def describe(card: dict, src: str, txt: str, today: str, *, parent: str = "", sp
     return "\n".join(lines) + f"\n\nFiled from a quick note ({src}, {today}{split}): “{txt}”"
 
 
+def _title_key(title: str) -> str:
+    return " ".join(re.sub(r"[^\w\s]", " ", (title or "").lower()).split())
+
+
 async def async_file_note(
     hass: HomeAssistant,
     data,
@@ -262,6 +266,13 @@ async def async_file_note(
             raw_cards = [{}]
 
     cards = normalize(raw_cards, txt, pins, today)
+    if not ai_used and not meta["dup"]:
+        # No model to judge duplicates: catch the obvious one, the same title still open.
+        same = _title_key(cards[0]["title"])
+        for r in rows:
+            if _title_key(r["title"]) == same:
+                meta["dup"] = r["uid"][:8]
+                break
     covers = [
         {"uid": lookup[u]["uid"], "entity_id": entity_id_for(lookup[u]["branch"]), "title": lookup[u]["title"]}
         for u in meta["covers"]
@@ -278,8 +289,9 @@ async def async_file_note(
             "duplicate_entity": entity_id_for(d["branch"]),
             "duplicate_uid": d["uid"],
         }
-        if src not in ("panel",) and not dry_run:
+        if src not in ("panel", "claude") and not dry_run:
             # No screen to ask on (voice, phone): keep the note on the existing card.
+            # The panel and an AI chat show the match and let the person decide.
             await data.run(store.add_note, d["uid"], f"also asked ({src}): {txt}", None, "quickadd")
             data.changed(d["branch"])
             res["status"] = "noted_on_duplicate"
